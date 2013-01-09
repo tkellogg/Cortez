@@ -20,6 +20,23 @@ namespace Manhandler
 			return null;
 		}
 
+		public TOut Map<TIn, TOut>(TIn input) {
+			var fn = GetMapConstructor<TIn, TOut>();
+			if (fn == null) {
+				Map<TIn, TOut>();
+				fn = GetMapConstructor<TIn, TOut>();
+			}
+			return fn(input);
+		}
+
+		public Expression<Func<TIn, TOut>> GetMapExpression<TIn, TOut>() {
+			Func<Expression, Expression> expr;
+			_expressions.TryGetValue(Tuple.Create(typeof (TIn), typeof (TOut)), out expr);
+			var parameter = Expression.Parameter(typeof (TIn), "input");
+			var lambda = Expression.Lambda (expr(parameter), parameter);
+			return (Expression<Func<TIn, TOut>>) lambda;
+		}
+
 		public void Map<TIn, TOut>() {
 			var key = Tuple.Create (typeof (TIn), typeof (TOut));
 			if (_functions.ContainsKey(key)) return;

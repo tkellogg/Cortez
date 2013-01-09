@@ -1,4 +1,4 @@
-using System;
+using System.Linq;
 using Xunit;
 
 namespace Manhandler.Tests
@@ -9,14 +9,23 @@ namespace Manhandler.Tests
 
 		[Fact]
 		public void It_maps_A_to_B() {
-			mh.Map<A, B>();
-			var ctor = mh.GetMapConstructor<A, B>();
 			var a = new A{String = "hello world", Int = 42};
-			var b = ctor(a);
+			var b = mh.Map<A, B>(a);
 
 			Assert.NotNull (b);
 			Assert.Equal (a.String, b.String);
 			Assert.Equal (a.Int, b.Int);
+		}
+
+		[Fact]
+		public void It_gets_an_expression_to_map_A_to_B() {
+			mh.Map<A, B>();
+			var expr = mh.GetMapExpression<A, B>();
+
+			var objects = new[]{new A{String="hello world", Int=42}, new A{String="Magic", Int=8}};
+			var mapped = objects.AsQueryable().Select(expr);
+
+			Assert.False (mapped.Any (x => x.String == null));
 		}
 
 		class A {
@@ -38,10 +47,8 @@ namespace Manhandler.Tests
 
 		[Fact]
 		public void It_maps_aggregate_to_aggregate() {
-			mh.Map<AggregateA, AggregateB>();
-			var ctor = mh.GetMapConstructor<AggregateA, AggregateB>();
 			var a = new AggregateA{Id = 4770, Prop = new A {String = "hello world", Int = 42}};
-			var b = ctor(a);
+			var b = mh.Map<AggregateA, AggregateB>(a);
 
 			Assert.NotNull (b);
 			Assert.NotNull (b.Prop);
@@ -50,6 +57,19 @@ namespace Manhandler.Tests
 			Assert.Equal (a.Prop.String, b.Prop.String);
 		}
 
+		[Fact]
+		public void It_gets_an_expression_to_map_aggregate_to_aggregate () {
+			mh.Map<AggregateA, AggregateB> ();
+			var expr = mh.GetMapExpression<AggregateA, AggregateB> ();
+
+			var objects = new[] {
+				new AggregateA {Prop=new A{String="hello world", Int=42}},
+				new AggregateA{Prop=new A{String="Magic", Int=8}}
+			};
+			var mapped = objects.AsQueryable ().Select (expr);
+
+			Assert.False (mapped.Any (x => x.Prop == null || x.Prop.String == null));
+		}
 	}
 }
 
