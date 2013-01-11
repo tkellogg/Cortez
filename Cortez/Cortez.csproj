@@ -5,10 +5,10 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{9170FA6D-8305-4A73-B692-1DB1DFE8B832}</ProjectGuid>
+    <ProjectGuid>{FCD80E45-61F9-4857-9052-DAFFC6D6FE72}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Manhandler.Tests</RootNamespace>
-    <AssemblyName>Manhandler.Tests</AssemblyName>
+    <RootNamespace>Cortez</RootNamespace>
+    <AssemblyName>Cortez</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -19,11 +19,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <CustomCommands>
-      <CustomCommands>
-        <Command type="Execute" command="../lib/xUnit/xunit.gui.clr4.exe bin/Debug/Manhandler.Tests.dll" workingdir="" />
-      </CustomCommands>
-    </CustomCommands>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -35,20 +30,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="xunit">
-      <HintPath>..\lib\xUnit\xunit.dll</HintPath>
-    </Reference>
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="ManhandlerTests.cs" />
+    <Compile Include="Cortez.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <ItemGroup>
-    <ProjectReference Include="..\Manhandler\Manhandler.csproj">
-      <Project>{FCD80E45-61F9-4857-9052-DAFFC6D6FE72}</Project>
-      <Name>Manhandler</Name>
-    </ProjectReference>
-  </ItemGroup>
 </Project>

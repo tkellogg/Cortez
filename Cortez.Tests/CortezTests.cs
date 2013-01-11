@@ -1,11 +1,11 @@
 using System.Linq;
 using Xunit;
 
-namespace Manhandler.Tests
+namespace Cortez.Tests
 {
-	public class ManhandlerTests
+	public class CortezTests
 	{
-		Manhandler mh = new Manhandler();
+		Cortez mh = new Cortez();
 
 		[Fact]
 		public void It_maps_A_to_B() {

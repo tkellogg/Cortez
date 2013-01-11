@@ -4,9 +4,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Manhandler
+namespace Cortez
 {
-	public class Manhandler
+	public class Cortez
 	{
 		Dictionary<Tuple<Type, Type>, object> _functions = new Dictionary<Tuple<Type, Type>, object>();
 		Dictionary<Tuple<Type, Type>, Func<Expression, Expression>> _expressions = 
@@ -124,6 +124,11 @@ namespace Manhandler
 			public SubstituteVisitor(Expression from, Expression to) {
 				From = from;
 				To = to;
+			}
+
+			public override Expression Visit (Expression node) {
+				if (node == From) return To;
+				return base.Visit (node);
 			}
 		}
 	}

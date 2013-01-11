@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Manhandler", "Manhandler\Manhandler.csproj", "{FCD80E45-61F9-4857-9052-DAFFC6D6FE72}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cortez", "Cortez\Cortez.csproj", "{FCD80E45-61F9-4857-9052-DAFFC6D6FE72}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Manhandler.Tests", "Manhandler.Tests\Manhandler.Tests.csproj", "{9170FA6D-8305-4A73-B692-1DB1DFE8B832}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cortez.Tests", "Cortez.Tests\Cortez.Tests.csproj", "{9170FA6D-8305-4A73-B692-1DB1DFE8B832}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +21,6 @@ Global
 		{FCD80E45-61F9-4857-9052-DAFFC6D6FE72}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = Manhandler.Tests\Manhandler.Tests.csproj
+		StartupItem = Cortez.Tests\Cortez.Tests.csproj
 	EndGlobalSection
 EndGlobal
