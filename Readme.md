@@ -35,5 +35,4 @@ Using Cortez
 It's a single file, just download it [here][1] and include it in your
 project.
 
- [1]: 
-://github.com/tkellogg/Cortez/blob/master/Cortez/Cortez.csar mapper = new Cortez();
+ [1]: https://github.com/tkellogg/Cortez/blob/master/Cortez/Cortez.csar mapper = new Cortez();
