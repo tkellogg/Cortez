@@ -72,7 +72,7 @@ namespace Cortez.Tests
 		}
 
 		[Fact]
-		public void It_can_instruct_it_how_to_map_a_property() {
+		public void I_can_instruct_it_how_to_map_a_property() {
 			mh.Map<A, B>(config => config.Set(x => x.String).EqualTo(x => "from B: " + x.Int.ToString()));
 			mh.Map<AggregateA, AggregateB>();
 				//(from, to) => to.Prop == new A{String = "from B: " + from.Prop}));
@@ -80,6 +80,30 @@ namespace Cortez.Tests
 			var result = mh.Map<AggregateA, AggregateB>(new AggregateA{Id = 63, Prop=new A{String="bar", Int = 42}});
 			Assert.NotNull (result.Prop);
 			Assert.Equal("from B: 42", result.Prop.String);
+			Assert.Equal(42, result.Prop.Int);
+			Assert.Equal(63, result.Id);
+		}
+
+		[Fact]
+		public void It_automaps_when_I_havent_setup_a_mapping () {
+			mh.Map<A, B> (config => config.Set (x => x.String).EqualTo (x => "from B: " + x.Int.ToString ()));
+
+			var result = mh.Map<AggregateA, AggregateB> (new AggregateA{Id = 63, Prop=new A{String="bar", Int = 42}});
+			Assert.NotNull (result.Prop);
+			Assert.Equal ("from B: 42", result.Prop.String);
+			Assert.Equal (42, result.Prop.Int);
+			Assert.Equal (63, result.Id);
+		}
+
+		[Fact]
+		public void I_can_setup_my_own_constructor_for_a_property() {
+			mh.Map<AggregateA, AggregateB>(config => config.Set(x => x.Prop).EqualTo(x => new B { String = "customized as: " + x.Prop.Int.ToString() }));
+
+			var result = mh.Map<AggregateA, AggregateB>(new AggregateA{Id = 63, Prop=new A{String="bar", Int = 42}});
+			Assert.NotNull (result.Prop);
+			Assert.Equal("customized as: 42", result.Prop.String);
+			Assert.Equal(0, result.Prop.Int); // We didn't set the other property of `new B`
+			Assert.Equal(63, result.Id);
 		}
 	}
 }
