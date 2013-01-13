@@ -9,8 +9,8 @@ namespace Cortez
 	public class Cortez
 	{
 		Dictionary<Tuple<Type, Type>, object> _functions = new Dictionary<Tuple<Type, Type>, object>();
-		Dictionary<Tuple<Type, Type>, Func<Expression, Expression>> _expressions = 
-			new Dictionary<Tuple<Type, Type>, Func<Expression, Expression>>();
+		Dictionary<Tuple<Type, Type>, Func<Expression, Expression, Expression>> _expressions = 
+			new Dictionary<Tuple<Type, Type>, Func<Expression, Expression, Expression>>();
 
 		public Func<TIn, TOut> GetMapConstructor<TIn, TOut>() {
 			object fn;
@@ -30,10 +30,11 @@ namespace Cortez
 		}
 
 		public Expression<Func<TIn, TOut>> GetMapExpression<TIn, TOut>() {
-			Func<Expression, Expression> expr;
+			Func<Expression, Expression, Expression> expr;
 			_expressions.TryGetValue(Tuple.Create(typeof (TIn), typeof (TOut)), out expr);
 			var parameter = Expression.Parameter(typeof (TIn), "input");
-			var lambda = Expression.Lambda (expr(parameter), parameter);
+			var expression = SubstituteParameter(expr(parameter, parameter), parameter);
+			var lambda = Expression.Lambda (expression, parameter);
 			return (Expression<Func<TIn, TOut>>) lambda;
 		}
 
@@ -67,10 +68,10 @@ namespace Cortez
 			var inParam = Expression.Parameter (typeIn, "input");
 
 			// As a Func because we need to reuse it later with different parameters
-			Func<Expression, Expression> getInitExpr = param => 
+			Func<Expression, Expression, Expression> getInitExpr = (paramExpr, propExpr) => 
 			{
 				var assignments = propMatches.Select (props => {
-					var val = GetPropertyValue(param, props.Item1, props.Item2, properties);
+					var val = GetPropertyValue(paramExpr, propExpr, props.Item1, props.Item2, properties);
 					return Expression.Bind (props.Item2, val);
 				}).ToArray();
 
@@ -81,23 +82,24 @@ namespace Cortez
 			};
 
 			_expressions[Tuple.Create (typeIn, typeOut)] = getInitExpr;
-			var initExpr = getInitExpr(inParam);
-			return Expression.Lambda(initExpr, inParam);
+			var initExpr = getInitExpr(inParam, inParam);
+			return Expression.Lambda(SubstituteParameter(initExpr, inParam), inParam);
 		}
 
 		/// <summary>
 		/// Gets an expression representing the value of a property. This could be a simple
 		/// member access, or as complicated as another mapping function.
 		/// </summary>
-		/// <param name='param'>The object that <c>propIn</c> belongs to</param>
+		/// <param name='paramExpr'>The root parameter expression that is being passed down</param>
+		/// <param name='propExpr'>The object that <c>propIn</c> belongs to</param>
 		/// <param name='propIn'>The property that data is flowing from</param>
 		/// <param name='typeOut'>The property type of the destination</param>
 		/// <param name='properties'></param>
-		Expression GetPropertyValue (Expression param, PropertyInfo propIn, PropertyInfo propOut, IPropertyMap properties)
+		Expression GetPropertyValue (Expression paramExpr, Expression propExpr, PropertyInfo propIn, PropertyInfo propOut, IPropertyMap properties)
 		{
 			var typeOut = propOut.PropertyType;
-			var memberAccess = Expression.MakeMemberAccess (param, propIn);
-			Func<Expression, Expression> fn;
+			var memberAccess = Expression.MakeMemberAccess (propExpr, propIn);
+			Func<Expression, Expression, Expression> fn;
 			if (!properties.Maps.TryGetValue (propOut, out fn)) {
 				if (propIn.PropertyType.Namespace.StartsWith ("System") && typeOut.Namespace.StartsWith ("System"))
 					return memberAccess;
@@ -108,11 +110,11 @@ namespace Cortez
 					fn = _expressions [key];
 				}
 			}
-			return fn(memberAccess);
+			return fn(paramExpr, memberAccess);
 		}
 
 		interface IPropertyMap {
-			Dictionary<PropertyInfo, Func<Expression, Expression>> Maps { get; }
+			Dictionary<PropertyInfo, Func<Expression, Expression, Expression>> Maps { get; }
 		}
 
 		class MapConfiguration<TSource, TDest> : Configuration.IMapConfiguration<TSource, TDest>, IPropertyMap
@@ -125,7 +127,7 @@ namespace Cortez
 
 				var propertyInfo = (PropertyInfo) memberExpr.Member;
 				var body = binExpr.Right;
-				Maps[propertyInfo] = param => body;
+				Maps[propertyInfo] = (param, _) => body;
 				return this;
 			}
 
@@ -133,11 +135,11 @@ namespace Cortez
 				return new MapPropertyValue<TProperty>(this, propertySelector);
 			}
 
-			Dictionary<PropertyInfo, Func<Expression, Expression>> _maps = new Dictionary<PropertyInfo, Func<Expression, Expression>>();
+			Dictionary<PropertyInfo, Func<Expression, Expression, Expression>> _maps = new Dictionary<PropertyInfo, Func<Expression, Expression, Expression>>();
 			/// <value>
 			/// The Func processes 1 parameter (a member access) and returns 
 			/// </value>
-			public Dictionary<PropertyInfo, Func<Expression, Expression>> Maps { get { return _maps; } }
+			public Dictionary<PropertyInfo, Func<Expression, Expression, Expression>> Maps { get { return _maps; } }
 
 			class MapPropertyValue<TProperty> : Configuration.IMapPropertyValue<TSource, TDest, TProperty>
 			{
@@ -153,8 +155,10 @@ namespace Cortez
 				}
 
 				public Configuration.IMapConfiguration<TSource,TDest> EqualTo(Expression<Func<TSource, TProperty>> sourceSelector) {
-					_config.Maps[Destination] = to => {
-						to = FindParameter (to);
+					_config.Maps[Destination] = (param, to) => {
+						if (to is MemberExpression)
+							// Sometimes we get a reference to a previous property. This corrects it to be the parent.
+							to = ((MemberExpression) to).Expression;
 						return Substitute(sourceSelector.Body, sourceSelector.Parameters[0], to);
 					};
 					return _config;
@@ -169,20 +173,25 @@ namespace Cortez
 			return expr as ParameterExpression;
 		}
 
-		static Expression Substitute(Expression @using, Expression find, Expression replaceWith) {
-			return new SubstituteVisitor(find, replaceWith).Visit(@using);
+		static Expression SubstituteParameter(Expression baseExpr, Expression replaceWith) {
+			return new SubstituteVisitor(replaceWith, x => x.NodeType == ExpressionType.Parameter).Visit (baseExpr);
 		}
 
-		// Not used. I may not use yet yet...
+		static Expression Substitute(Expression @using, Expression find, Expression replaceWith) {
+			return new SubstituteVisitor(replaceWith, x => x == find)
+				.Visit(@using);
+		}
+
 		class SubstituteVisitor : ExpressionVisitor {
-			public readonly Expression From, To;
-			public SubstituteVisitor(Expression from, Expression to) {
-				From = from;
+			public readonly Expression To;
+			readonly Func<Expression, bool> _condition;
+			public SubstituteVisitor(Expression to, Func<Expression, bool> condition) {
 				To = to;
+				_condition = condition;
 			}
 
 			public override Expression Visit (Expression node) {
-				if (node == From) return To;
+				if (_condition(node)) return To;
 				var ret = base.Visit (node);
 				return ret;
 			}

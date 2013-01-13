@@ -72,14 +72,14 @@ namespace Cortez.Tests
 		}
 
 		[Fact]
-		public void I_can_instruct_it_how_to_map_a_property() {
+		public void It_can_instruct_it_how_to_map_a_property() {
 			mh.Map<A, B>(config => config.Set(x => x.String).EqualTo(x => "from B: " + x.Int.ToString()));
 			mh.Map<AggregateA, AggregateB>();
 				//(from, to) => to.Prop == new A{String = "from B: " + from.Prop}));
 
-			var result = mh.Map<AggregateA, AggregateB>(new AggregateA{Id = 63, Prop=new A{String="bar"}});
+			var result = mh.Map<AggregateA, AggregateB>(new AggregateA{Id = 63, Prop=new A{String="bar", Int = 42}});
 			Assert.NotNull (result.Prop);
-			Assert.Equal("from B: 63", result.Prop.String);
+			Assert.Equal("from B: 42", result.Prop.String);
 		}
 	}
 }
