@@ -20,13 +20,12 @@ makes Cortez _really_ convenient to use with LINQ.
 
 ```csharp
 var mapper = new Cortez();
-selectExpression = mapper.GetExpression<User, UserViewModel>();
 
 // UserViewModel is populated directly from the database, 
 // no user object is instantiated
 var viewModel = users.AsQueryable()
     .Where(u => u.Name == "Jack")
-    .Select(selectExpression);
+    .Select(mapper.GetExpression<User, UserViewModel>());
 ```
 
 Using Cortez
