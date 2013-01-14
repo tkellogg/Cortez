@@ -6,8 +6,7 @@ Expression tree enhancements from .NET 4.0 to generate functions
 to map one object to another.
 
 ```csharp
-var mapper = new Cortez();
-var viewModel = mapper.Map<User, UserViewModel>(existingUser);
+var viewModel = Mapper.Instance.Map<User, UserViewModel>(existingUser);
 ```
 
 LINQ to Databases
@@ -19,19 +18,17 @@ Expression trees, you can also retrieve just the expression tree, which
 makes Cortez _really_ convenient to use with LINQ.
 
 ```csharp
-var mapper = new Cortez();
-
-// UserViewModel is populated directly from the database, 
-// no user object is instantiated
-var viewModel = users.AsQueryable()
+// UserViewModel is populated directly from the database, no user object is instantiated. 
+var viewModels = usersDataSource.AsQueryable()
     .Where(u => u.Name == "Jack")
-    .Select(mapper.GetExpression<User, UserViewModel>());
+    .Select(Mapper.Instance.GetExpression<User, UserViewModel>())
+		.ToList();
 ```
 
-Using Cortez
+Installing Cortez
 ------------
 
-It's a single file, just download it [here][1] and include it in your
+It's a single file, just [download it here][1] and include it in your
 project.
 
- [1]: https://github.com/tkellogg/Cortez/blob/master/Cortez/Cortez.cs
+ [1]: https://github.com/tkellogg/Cortez/blob/master/Cortez/Mapper.cs

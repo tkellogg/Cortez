@@ -6,11 +6,65 @@ using System.Reflection;
 
 namespace Cortez
 {
-	public class Cortez
+	public interface IMapper {
+		/// <summary>
+		/// Gets a mapping function that creates an instance of <c>TOut</c>.
+		/// </summary>
+		Func<TIn, TOut> GetMapConstructor<TIn, TOut>();
+
+		/// <summary>
+		/// Gets an expression tree representing <c>GetMapConstructor<TIn, TOut>()</c>.
+		/// </summary>
+		Expression<Func<TIn, TOut>> GetMapExpression<TIn, TOut>();
+
+		/// <summary>
+		/// Creates an instance of <c>TOut</c> and maps input to the new instance.
+		/// </summary>
+		TOut Map<TIn, TOut>(TIn input);
+
+		/// <summary>
+		/// Setup custom mappings for a class map.
+		/// </summary>
+		/// <param name='expr'>
+		/// The configuration expression. Use this to map abnormal properties that don't
+		/// fit conventions.
+		/// </param>
+		void Map<TIn, TOut> (Action<Configuration.IMapConfiguration<TIn, TOut>> expr);
+
+		/// <summary>
+		/// Create a map from <c>TIn</c> to <c>TOut</c>. This isn't necessary
+		/// since maps are usually created on the fly.
+		/// </summary>
+		void Map<TIn, TOut>();
+	}
+
+	namespace Configuration 
+	{
+		public interface IMapConfiguration<TSource, TDest>
+		{
+			/// <summary>
+			/// Select a property to be set during mapping.
+			/// </summary>
+			IMapPropertyValue<TSource, TDest, TProperty> Set<TProperty>(Expression<Func<TDest, TProperty>> propertySelector);
+		}
+
+		public interface IMapPropertyValue<TSource, TDest, TProperty> 
+		{
+			/// <summary>
+			/// Using a source object, select a value for the destination property.
+			/// </summary>
+			IMapConfiguration<TSource,TDest> EqualTo(Expression<Func<TSource, TProperty>> valueSelector);
+		}
+	}
+
+	public class Mapper : IMapper
 	{
 		Dictionary<Tuple<Type, Type>, object> _functions = new Dictionary<Tuple<Type, Type>, object>();
 		Dictionary<Tuple<Type, Type>, Func<Expression, Expression, Expression>> _expressions = 
 			new Dictionary<Tuple<Type, Type>, Func<Expression, Expression, Expression>>();
+
+		static readonly IMapper _mapper = new Mapper();
+		public static IMapper Instance { get { return _mapper; }}
 
 		public Func<TIn, TOut> GetMapConstructor<TIn, TOut>() {
 			object fn;
@@ -195,20 +249,6 @@ namespace Cortez
 				var ret = base.Visit (node);
 				return ret;
 			}
-		}
-	}
-
-	namespace Configuration 
-	{
-		public interface IMapConfiguration<TSource, TDest>
-		{
-			//IMapConfiguration<TSource, TDest> Member(Expression<Func<TSource, TDest, bool>> assignmentSelector);
-			IMapPropertyValue<TSource, TDest, TProperty> Set<TProperty>(Expression<Func<TDest, TProperty>> propertySelector);
-		}
-
-		public interface IMapPropertyValue<TSource, TDest, TProperty> 
-		{
-			IMapConfiguration<TSource,TDest> EqualTo(Expression<Func<TSource, TProperty>> valueSelector);
 		}
 	}
 }

@@ -3,14 +3,14 @@ using Xunit;
 
 namespace Cortez.Tests
 {
-	public class CortezTests
+	public class MapperTests
 	{
-		Cortez mh = new Cortez();
+		Mapper mapper = new Mapper();
 
 		[Fact]
 		public void It_maps_A_to_B() {
 			var a = new A{String = "hello world", Int = 42};
-			var b = mh.Map<A, B>(a);
+			var b = mapper.Map<A, B>(a);
 
 			Assert.NotNull (b);
 			Assert.Equal (a.String, b.String);
@@ -19,8 +19,8 @@ namespace Cortez.Tests
 
 		[Fact]
 		public void It_gets_an_expression_to_map_A_to_B() {
-			mh.Map<A, B>();
-			var expr = mh.GetMapExpression<A, B>();
+			mapper.Map<A, B>();
+			var expr = mapper.GetMapExpression<A, B>();
 
 			var objects = new[]{new A{String="hello world", Int=42}, new A{String="Magic", Int=8}};
 			var mapped = objects.AsQueryable().Select(expr);
@@ -48,7 +48,7 @@ namespace Cortez.Tests
 		[Fact]
 		public void It_maps_aggregate_to_aggregate() {
 			var a = new AggregateA{Id = 4770, Prop = new A {String = "hello world", Int = 42}};
-			var b = mh.Map<AggregateA, AggregateB>(a);
+			var b = mapper.Map<AggregateA, AggregateB>(a);
 
 			Assert.NotNull (b);
 			Assert.NotNull (b.Prop);
@@ -59,8 +59,8 @@ namespace Cortez.Tests
 
 		[Fact]
 		public void It_gets_an_expression_to_map_aggregate_to_aggregate () {
-			mh.Map<AggregateA, AggregateB> ();
-			var expr = mh.GetMapExpression<AggregateA, AggregateB> ();
+			mapper.Map<AggregateA, AggregateB> ();
+			var expr = mapper.GetMapExpression<AggregateA, AggregateB> ();
 
 			var objects = new[] {
 				new AggregateA {Prop=new A{String="hello world", Int=42}},
@@ -73,11 +73,11 @@ namespace Cortez.Tests
 
 		[Fact]
 		public void I_can_instruct_it_how_to_map_a_property() {
-			mh.Map<A, B>(config => config.Set(x => x.String).EqualTo(x => "from B: " + x.Int.ToString()));
-			mh.Map<AggregateA, AggregateB>();
+			mapper.Map<A, B>(config => config.Set(x => x.String).EqualTo(x => "from B: " + x.Int.ToString()));
+			mapper.Map<AggregateA, AggregateB>();
 				//(from, to) => to.Prop == new A{String = "from B: " + from.Prop}));
 
-			var result = mh.Map<AggregateA, AggregateB>(new AggregateA{Id = 63, Prop=new A{String="bar", Int = 42}});
+			var result = mapper.Map<AggregateA, AggregateB>(new AggregateA{Id = 63, Prop=new A{String="bar", Int = 42}});
 			Assert.NotNull (result.Prop);
 			Assert.Equal("from B: 42", result.Prop.String);
 			Assert.Equal(42, result.Prop.Int);
@@ -86,9 +86,9 @@ namespace Cortez.Tests
 
 		[Fact]
 		public void It_automaps_when_I_havent_setup_a_mapping () {
-			mh.Map<A, B> (config => config.Set (x => x.String).EqualTo (x => "from B: " + x.Int.ToString ()));
+			mapper.Map<A, B> (config => config.Set (x => x.String).EqualTo (x => "from B: " + x.Int.ToString ()));
 
-			var result = mh.Map<AggregateA, AggregateB> (new AggregateA{Id = 63, Prop=new A{String="bar", Int = 42}});
+			var result = mapper.Map<AggregateA, AggregateB> (new AggregateA{Id = 63, Prop=new A{String="bar", Int = 42}});
 			Assert.NotNull (result.Prop);
 			Assert.Equal ("from B: 42", result.Prop.String);
 			Assert.Equal (42, result.Prop.Int);
@@ -97,9 +97,9 @@ namespace Cortez.Tests
 
 		[Fact]
 		public void I_can_setup_my_own_constructor_for_a_property() {
-			mh.Map<AggregateA, AggregateB>(config => config.Set(x => x.Prop).EqualTo(x => new B { String = "customized as: " + x.Prop.Int.ToString() }));
+			mapper.Map<AggregateA, AggregateB>(config => config.Set(x => x.Prop).EqualTo(x => new B { String = "customized as: " + x.Prop.Int.ToString() }));
 
-			var result = mh.Map<AggregateA, AggregateB>(new AggregateA{Id = 63, Prop=new A{String="bar", Int = 42}});
+			var result = mapper.Map<AggregateA, AggregateB>(new AggregateA{Id = 63, Prop=new A{String="bar", Int = 42}});
 			Assert.NotNull (result.Prop);
 			Assert.Equal("customized as: 42", result.Prop.String);
 			Assert.Equal(0, result.Prop.Int); // We didn't set the other property of `new B`
